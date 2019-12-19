@@ -2,15 +2,23 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.Identity.Models;
 
 namespace WebApp.Identity.Controllers
 {
-    [ApiController]
     public class HomeController : Controller
     {
+        private readonly UserManager<MyUser> userManager;
+
+        public HomeController(UserManager<MyUser> userManager)
+        {
+            this.userManager = userManager;
+        }
         public IActionResult Index()
         {
             return View();
@@ -21,12 +29,59 @@ namespace WebApp.Identity.Controllers
             return View();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await userManager.FindByNameAsync(model.UserName);
+
+                if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
+                {
+                    var identity = new ClaimsIdentity("cookies");
+                    identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id));
+                    identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+
+                    await HttpContext.SignInAsync("cookies", new ClaimsPrincipal(identity));
+
+                    return RedirectToAction("About");
+                }
+                ModelState.AddModelError("", "Usuário ou Senha Inválida");
+            }
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> Register(RegisterModel model)
         {
             if (ModelState.IsValid)
             {
+                var user = await this.userManager.FindByNameAsync(model.UserName);
+                if (user == null)
+                {
+                    user = new MyUser()
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserName = model.UserName
+                    };
+
+                    var result = await this.userManager.CreateAsync(user, model.Password);
+                }
                 return View("Success");
             }
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Register()
+        {
             return View();
         }
 
