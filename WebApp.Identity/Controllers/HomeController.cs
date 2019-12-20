@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.Identity.Models;
@@ -81,6 +82,19 @@ namespace WebApp.Identity.Controllers
 
         [HttpGet]
         public async Task<IActionResult> Register()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult About()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Success()
         {
             return View();
         }

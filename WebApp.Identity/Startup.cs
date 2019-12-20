@@ -35,6 +35,8 @@ namespace WebApp.Identity
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddIdentityCore<MyUser>(options => { });
             services.AddScoped<IUserStore<MyUser>, MyUserStore>();
+
+            services.AddAuthentication("cookies").AddCookie("cookies", options => options.LoginPath = "/Home/Login");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,6 +50,8 @@ namespace WebApp.Identity
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+
+            app.UseAuthentication();
 
             app.UseStaticFiles();
             app.UseCookiePolicy();
