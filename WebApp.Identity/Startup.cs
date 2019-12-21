@@ -40,13 +40,16 @@ namespace WebApp.Identity
             var connectionString = @"Data Source=NANE-ACER;Initial Catalog=IdentityCurso;User ID=sa;Password=masterkey;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
             var migrationAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
 
-            services.AddDbContext<IdentityDbContext>(opt => opt.UseSqlServer(connectionString, sql => sql.MigrationsAssembly(migrationAssembly)));
+            services.AddDbContext<MyUserDbContext>(opt => opt.UseSqlServer(connectionString, sql => sql.MigrationsAssembly(migrationAssembly)));
 
             //services.AddIdentityCore<MyUser>(options => { });
             //services.AddScoped < IUserStore<MyUser, MyUserStore>();
 
-            services.AddIdentityCore<IdentityUser>(options => { });
-            services.AddScoped<IUserStore<IdentityUser>, UserOnlyStore<IdentityUser, IdentityDbContext>>();
+            //services.AddIdentityCore<IdentityUser>(options => { });
+            //services.AddScoped<IUserStore<IdentityUser>, UserOnlyStore<IdentityUser, IdentityDbContext>>();
+
+            services.AddIdentityCore<MyUser>(options => { });
+            services.AddScoped<IUserStore<MyUser>, UserOnlyStore<MyUser, MyUserDbContext>>();
 
             services.AddAuthentication("cookies").AddCookie("cookies", options => options.LoginPath = "/Home/Login");
         }
