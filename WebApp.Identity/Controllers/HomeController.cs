@@ -41,6 +41,11 @@ namespace WebApp.Identity.Controllers
 
                 if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
                 {
+                    if (!await userManager.IsEmailConfirmedAsync(user))
+                    {
+                        ModelState.AddModelError("", "Email não está válido!");
+                        return View();
+                    }
                     var principal = await _userClaimsPrincipalFactory.CreateAsync(user);
 
                     await HttpContext.SignInAsync("Identity.Application", principal);
@@ -69,19 +74,109 @@ namespace WebApp.Identity.Controllers
                     user = new MyUser()
                     {
                         Id = Guid.NewGuid().ToString(),
-                        UserName = model.UserName
+                        UserName = model.UserName,
+                        Email = model.UserName
                     };
 
                     var result = await this.userManager.CreateAsync(user, model.Password);
+
+                    if (result.Succeeded)
+                    {
+                        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                        var confirmationEmail = Url.Action("ConfirmEmailAdrress", "Home", new { token = token, email = user.Email }, Request.Scheme);
+
+                        System.IO.File.WriteAllText("confirmationEmail.txt", confirmationEmail);
+                    }
                 }
                 return View("Success");
             }
             return View();
         }
+        
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmailAdrress(string token, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user != null)
+            {
+                var result = await userManager.ConfirmEmailAsync(user, token);
+
+                if (result.Succeeded)
+                {
+                    return View("Success");
+                }
+            }
+            return View("Error");
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> Register()
         {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await userManager.FindByEmailAsync(model.Email);
+
+                if (user != null)
+                {
+                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                    var resetURL = Url.Action("ResetPassword", "Home", new { token = token, email = model.Email }, Request.Scheme);
+
+                    System.IO.File.WriteAllText("resetLink.txt", resetURL);
+
+                    return View("Success");
+                } else
+                {
+                    // direcionar para uma view dizendo que o usuário não foi encontrado
+                }
+            }
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            return View(new ResetPasswordModel { Token = token, Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await userManager.FindByEmailAsync(model.Email);
+
+                if (user != null)
+                {
+                    var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
+
+                    if (!result.Succeeded)
+                    {
+                        foreach (var erro in result.Errors)
+                        {
+                            ModelState.AddModelError("", erro.Description);
+                        }
+                        return View();
+                    }
+
+                    return View("Success");
+                }
+                ModelState.AddModelError("", "Invalid Request");
+            }
             return View();
         }
 

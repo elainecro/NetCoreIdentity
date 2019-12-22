@@ -1,0 +1,1 @@
+http://localhost:63011/Home/ConfirmEmailAdrress?token=CfDJ8FpH%2BhVCr4NKmB%2B3V422UMl%2BGFfdTefkqO1zXoJ1fHjPhZhQv7js7ryFn%2FRMMv9dJCP7l9TyUVCw8JFFJS9vlLDx2UsDAQzwT4v6sCGSlpCFlFiSrLElBqUMv9EqcV%2F2gFpdrZq9FxrHrITkelYByLy3k%2FJjXAuS1N%2FoZSaIS4tXh9une0%2FHgK1xnXocxSZntS5FCPq%2FK7gCSKSin3u0muFMiFXcP1FBZZ7UZrGwc7qsU63lqBdeDPwIa8u7p%2FRCJg%3D%3D&email=elaine@elaine.com.br

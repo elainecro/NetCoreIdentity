@@ -48,11 +48,21 @@ namespace WebApp.Identity
             //services.AddIdentityCore<IdentityUser>(options => { });
             //services.AddScoped<IUserStore<IdentityUser>, UserOnlyStore<IdentityUser, IdentityDbContext>>();
 
-            services.AddIdentity<MyUser, IdentityRole>(options => { })
-                .AddEntityFrameworkStores<MyUserDbContext>();
+            services.AddIdentity<MyUser, IdentityRole>(options => {
+                    options.SignIn.RequireConfirmedEmail = true;
+                    options.Password.RequireDigit = false;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequiredLength = 4;
+                })
+                .AddEntityFrameworkStores<MyUserDbContext>()
+                .AddDefaultTokenProviders();
             //services.AddScoped<IUserStore<MyUser>, UserOnlyStore<MyUser, MyUserDbContext>>();
 
             services.AddScoped<IUserClaimsPrincipalFactory<MyUser>, MyUserClaimsPrincipalFactory>();
+
+            services.Configure<DataProtectionTokenProviderOptions>(opt => opt.TokenLifespan = TimeSpan.FromHours(3));
 
             //services.AddAuthentication("cookies").AddCookie("cookies", options => options.LoginPath = "/Home/Login");
             services.ConfigureApplicationCookie(options => options.LoginPath = "/Home/Login");
