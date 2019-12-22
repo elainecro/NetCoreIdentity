@@ -16,11 +16,14 @@ namespace WebApp.Identity.Controllers
     {
         private readonly UserManager<MyUser> userManager;
         private readonly IUserClaimsPrincipalFactory<MyUser> _userClaimsPrincipalFactory;
+        private readonly SignInManager<MyUser> _signInManager;
 
-        public HomeController(UserManager<MyUser> userManager, IUserClaimsPrincipalFactory<MyUser> userClaimsPrincipalFactory)
+        public HomeController(UserManager<MyUser> userManager, IUserClaimsPrincipalFactory<MyUser> userClaimsPrincipalFactory,
+            SignInManager<MyUser> signInManager)
         {
             this.userManager = userManager;
             _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
+            _signInManager = signInManager;
         }
         public IActionResult Index()
         {
@@ -37,14 +40,16 @@ namespace WebApp.Identity.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.FindByNameAsync(model.UserName);
+                //var user = await userManager.FindByNameAsync(model.UserName);
 
-                if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
-                {
-                    var principal = await _userClaimsPrincipalFactory.CreateAsync(user);
+                //if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
+                //{
+                //    var principal = await _userClaimsPrincipalFactory.CreateAsync(user);
 
-                    await HttpContext.SignInAsync("Identity.Application", principal);
+                //    await HttpContext.SignInAsync("Identity.Application", principal);
 
+                var signInResult = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
+                if (signInResult.Succeeded) { 
                     return RedirectToAction("About");
                 }
                 ModelState.AddModelError("", "Usuário ou Senha Inválida");
