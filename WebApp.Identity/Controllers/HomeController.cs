@@ -39,17 +39,27 @@ namespace WebApp.Identity.Controllers
             {
                 var user = await userManager.FindByNameAsync(model.UserName);
 
-                if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
-                {
-                    if (!await userManager.IsEmailConfirmedAsync(user))
+                if (user != null && !await userManager.IsLockedOutAsync(user)) {
+                    if (await userManager.CheckPasswordAsync(user, model.Password))
                     {
-                        ModelState.AddModelError("", "Email não está válido!");
-                        return View();
-                    }
-                    var principal = await _userClaimsPrincipalFactory.CreateAsync(user);
+                        if (!await userManager.IsEmailConfirmedAsync(user))
+                        {
+                            ModelState.AddModelError("", "Email não está válido!");
+                            return View();
+                        }
 
-                    await HttpContext.SignInAsync("Identity.Application", principal);
-                    return RedirectToAction("About");
+                        await userManager.ResetAccessFailedCountAsync(user);
+                        var principal = await _userClaimsPrincipalFactory.CreateAsync(user);
+
+                        await HttpContext.SignInAsync("Identity.Application", principal);
+                        return RedirectToAction("About");
+                    }
+                    await userManager.AccessFailedAsync(user);
+
+                    if (await userManager.IsLockedOutAsync(user))
+                    {
+                        //enviar email para sugerir mudança/recuperação de senha
+                    }
                 }
                 ModelState.AddModelError("", "Usuário ou Senha Inválida");
             }
@@ -86,6 +96,14 @@ namespace WebApp.Identity.Controllers
                         var confirmationEmail = Url.Action("ConfirmEmailAdrress", "Home", new { token = token, email = user.Email }, Request.Scheme);
 
                         System.IO.File.WriteAllText("confirmationEmail.txt", confirmationEmail);
+                    }
+                    else
+                    {
+                        foreach (var erro in result.Errors)
+                        {
+                            ModelState.AddModelError("", erro.Description);
+                        }
+                        return View();
                     }
                 }
                 return View("Success");
