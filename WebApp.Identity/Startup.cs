@@ -57,7 +57,8 @@ namespace WebApp.Identity
                     options.Password.RequiredLength = 4;
                 })
                 .AddEntityFrameworkStores<MyUserDbContext>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                .AddPasswordValidator<NaoContemValidadorSenha<MyUser>>();
             //services.AddScoped<IUserStore<MyUser>, UserOnlyStore<MyUser, MyUserDbContext>>();
 
             services.AddScoped<IUserClaimsPrincipalFactory<MyUser>, MyUserClaimsPrincipalFactory>();
