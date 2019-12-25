@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -36,20 +37,40 @@ namespace WebAPI.Identity.Controllers
         }
         // GET: api/User
         [HttpGet]
-        public IEnumerable<string> Get()
+        [AllowAnonymous]
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            return Ok(new UserDto());
         }
 
         // GET: api/User/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        [HttpPost("Login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login(UserLoginDto userLogin)
         {
-            return "value";
+            try
+            {
+                var user = await _userManager.FindByNameAsync(userLogin.UserName);
+                var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
+
+                if (result.Succeeded)
+                {
+                    var appUser = await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedUserName == user.UserName.ToUpper());
+                    var userToReturn = _mapper.Map<UserLoginDto>(appUser);
+                    return Ok(new { token = GenerateJWToken(appUser).Result, user = userToReturn });
+                }
+
+                return Unauthorized();
+            }
+            catch (Exception ex)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Erro: {ex.Message}");
+            }
         }
 
         // POST: api/User
         [HttpPost("Register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(UserDto userDto)
         {
             try
@@ -61,7 +82,8 @@ namespace WebAPI.Identity.Controllers
                     user = new User
                     {
                         UserName = userDto.UserName,
-                        Email = userDto.UserName
+                        Email = userDto.UserName,
+                        NomeCompleto = userDto.NomeCompleto
                     };
 
                     var result = await _userManager.CreateAsync(user, userDto.Password);
